@@ -34,7 +34,6 @@ export default defineConfig([{
 
   rules: {
     indent: ['error', 2],
-    'linebreak-style': ['error', 'windows'],
     quotes: ['error', 'single'],
     semi: ['error', 'always'],
   },

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import sqlite3 from 'sqlite3';
+import { Config } from '../../config';
 
 export class Database {
 
@@ -40,4 +41,4 @@ export class Database {
   );
 }
 
-export const db = new Database('./db.db');
+export const db = new Database(Config.SQLITE_DB_PATH);

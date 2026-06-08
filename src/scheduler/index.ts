@@ -11,6 +11,7 @@ const startScheduler = async () => {
     noOverlap: true
   });
   await task.execute(); // run now
+  console.log('Refresh completed');
 };
 
 startScheduler();

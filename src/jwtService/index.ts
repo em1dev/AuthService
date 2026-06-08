@@ -1,20 +1,19 @@
 import { generateKeyPair, SignJWT, jwtVerify } from 'jose';
 import { InternalError } from '../errors';
 import { TokenUser } from '../types';
-
-const ISSUER = 'ElPato.Auth';
+import { Config } from '../config';
 
 export const keyStore: {
   publicKey: null | CryptoKey,
   privateKey: null | CryptoKey
 } = {
   publicKey: null,
-  privateKey: null 
+  privateKey: null
 };
 
 const keyGeneration = async () => {
   const { privateKey, publicKey } = await generateKeyPair('PS256', { extractable: true });
-  console.log('generating keys');
+  console.log('Generated new keys');
   keyStore.privateKey = privateKey;
   keyStore.publicKey = publicKey;
 };
@@ -33,7 +32,7 @@ export const createToken = async (user: TokenUser, audience: string) => {
       alg: 'PS256'
     })
     .setIssuedAt()
-    .setIssuer(ISSUER)
+    .setIssuer(Config.TOKEN_ISSUER)
     .setAudience(audience)
     .setExpirationTime('1week')
     .sign(keyStore.privateKey);
@@ -47,7 +46,7 @@ export const verifyToken = async (token: string) => {
   }
 
   try {
-    const payload = await jwtVerify(token, keyStore.publicKey, { issuer: ISSUER });
+    const payload = await jwtVerify(token, keyStore.publicKey, { issuer: Config.TOKEN_ISSUER });
     return payload.payload;
   } catch {
     return null;
