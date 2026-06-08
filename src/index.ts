@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { Config } from './config';
 import { HttpErrorBase } from './errors';
-import { ZodError } from 'zod';
+import { ZodError }  from 'zod';
 
 export const app = express();
 app.use(express.json());

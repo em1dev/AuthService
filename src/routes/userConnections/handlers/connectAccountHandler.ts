@@ -42,7 +42,7 @@ export const connectAccountHandler = async (
   const service = await getAppServiceDecrypted(appId, connectionType);
   if (!service) throw new BadRequest(`Service ${connectionType} not supported`);
 
-  let tokenResponse: TokenResponse | null = null;
+  let tokenResponse: TokenResponse | null;
   switch (connectionType){
   case 'tiktok':
     tokenResponse = await getTikTokTokens(code, service, redirectUrl);
