@@ -4,27 +4,29 @@
   "main": "index.js",
   "license": "MIT",
   "engines": {
-    "node": ">=22.19"
+    "node": ">=24"
   },
   "scripts": {
-    "start": "ts-node ./src/index.ts",
-    "lint": "eslint .",
-    "migrate": "ts-node ./src/migrateDb.ts"
+    "dev": "ts-node ./src/index.ts",
+    "lint": "tsc --noEmit && eslint .",
+    "build": "tsc",
+    "start": "node ./dist",
+    "migrate": "node ./dist/migrateDb.js"
   },
   "dependencies": {
-    "@types/express": "^5.0.6",
-    "@types/node": "^25.9.2",
     "@vscode/sqlite3": "5.1.12-vscode",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jose": "^6.2.3",
     "nanoid": "^5.1.11",
     "node-cron": "^4.2.1",
-    "ts-node": "^10.9.2",
-    "typescript": "^6.0.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.9.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3",
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^10.0.1",
     "@typescript-eslint/eslint-plugin": "^8.60.1",

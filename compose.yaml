@@ -1,0 +1,15 @@
+services:
+  api:
+    build: .
+    ports:
+      - ${PORT}:80
+    environment:
+      - PORT=80
+      - SQLITE_DB_PATH=/db/database.db
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - TOKEN_ISSUER=${TOKEN_ISSUER}
+    volumes:
+      - database-data:/db
+
+volumes:
+  database-data:

@@ -1,4 +1,4 @@
-import { defineConfig } from 'eslint/config';
+import { defineConfig, globalIgnores } from 'eslint/config';
 import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import globals from 'globals';
 import tsParser from '@typescript-eslint/parser';
@@ -15,26 +15,28 @@ const compat = new FlatCompat({
   allConfig: js.configs.all
 });
 
-export default defineConfig([{
-  extends: compat.extends('eslint:recommended', 'plugin:@typescript-eslint/recommended'),
+export default defineConfig([
+  globalIgnores(['./dist']),
+  {
+    extends: compat.extends('eslint:recommended', 'plugin:@typescript-eslint/recommended'),
 
-  plugins: {
-    '@typescript-eslint': typescriptEslint,
-  },
-
-  languageOptions: {
-    globals: {
-      ...globals.browser,
+    plugins: {
+      '@typescript-eslint': typescriptEslint,
     },
 
-    parser: tsParser,
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-  },
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+      },
 
-  rules: {
-    indent: ['error', 2],
-    quotes: ['error', 'single'],
-    semi: ['error', 'always'],
-  },
-}]);
+      parser: tsParser,
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+    },
+
+    rules: {
+      indent: ['error', 2],
+      quotes: ['error', 'single'],
+      semi: ['error', 'always'],
+    },
+  }]);
