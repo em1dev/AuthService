@@ -1,5 +1,5 @@
 services:
-  api:
+  auth-api:
     build: .
     ports:
       - ${PORT}:80
@@ -10,6 +10,14 @@ services:
       - TOKEN_ISSUER=${TOKEN_ISSUER}
     volumes:
       - database-data:/db
+    networks:
+      - shared
+      - default
 
 volumes:
   database-data:
+
+networks:
+  shared:
+    external: true
+    name: auth-internal-network
