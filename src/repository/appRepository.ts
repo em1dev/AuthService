@@ -36,6 +36,15 @@ const getApp = async (appId: string) => {
   return app;
 };
 
+const getAppIds = async () => (
+  await db.all<{
+      id: string,
+    }>(`
+      SELECT *
+      FROM ${Tables.app}
+    `)
+);
+
 const createOrUpdateApp = async (nameId: string, externalService: Array<{
     type: ExternalServiceType,
     clientSecret: string,
@@ -59,7 +68,7 @@ const createOrUpdateApp = async (nameId: string, externalService: Array<{
             UPDATE ${Tables.externalService}
             SET client_secret = $clientSecret, client_id = $clientId
             WHERE fk_app_id = $appId AND type = $type
-          `, { 
+          `, {
           $type: service.type, $clientSecret: service.clientSecret, $clientId: service.clientId, $appId: nameId
         });
       } else {
@@ -67,7 +76,7 @@ const createOrUpdateApp = async (nameId: string, externalService: Array<{
         await db.run(`
             INSERT INTO ${Tables.externalService} (type, client_secret, client_id, fk_app_id)
             VALUES ($type, $clientSecret, $clientId, $appId)
-          `, { 
+          `, {
           $type: service.type, $clientSecret: service.clientSecret, $clientId: service.clientId, $appId: nameId
         });
       }
@@ -83,6 +92,7 @@ const createOrUpdateApp = async (nameId: string, externalService: Array<{
 export {
   createOrUpdateApp,
   getApp,
+  getAppIds,
   getAppService,
   getAppServices
 };

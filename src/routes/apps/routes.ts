@@ -3,6 +3,19 @@ import { app, handleError } from '../..';
 import { ExternalServiceType } from '../../repository/types';
 import { createOrUpdateAppHandler } from './handlers/createOrUpdateAppHandler';
 import { getAppServicesHandler } from './handlers/getAppServicesHandler';
+import { getApps } from './handlers/getAppsHandler';
+
+/**
+ * Get apps
+ */
+app.get('/app', async (req, res) => {
+  try {
+    const apps = await getApps();
+    return res.status(200).send(apps);
+  } catch (e) {
+    handleError(e, req, res);
+  }
+});
 
 /**
  * Get app
