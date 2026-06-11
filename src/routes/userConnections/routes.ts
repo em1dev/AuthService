@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { app, handleError } from '../..';
+import { app } from '../..';
 import { BadRequest } from '../../errors';
 import { connectAccountHandler } from './handlers/connectAccountHandler';
 import { ConnectionType } from '../../repository/types';
@@ -11,61 +11,49 @@ import { revokeConnectionTokenHandler } from './handlers/revokeConnectionTokenHa
  * Add a connection to a user
  */
 app.post('/:appId/user/:userId/connection/:connectionTypeId', async (req, res) => {
-  try {
-    const { code, redirectUrl } = z.object({
-      code: z.string(),
-      redirectUrl: z.string()
-    }).parse(req.body);
+  const { code, redirectUrl } = z.object({
+    code: z.string(),
+    redirectUrl: z.string()
+  }).parse(req.body);
 
-    const appId = req.params.appId.toLowerCase();
-    const connectionType = z.enum(ConnectionType).parse(req.params.connectionTypeId.toLowerCase());
-    const userId = Number.parseInt(req.params.userId);
+  const appId = req.params.appId.toLowerCase();
+  const connectionType = z.enum(ConnectionType).parse(req.params.connectionTypeId.toLowerCase());
+  const userId = Number.parseInt(req.params.userId);
 
-    if (isNaN(userId)) throw new BadRequest('user id is not valid');
+  if (isNaN(userId)) throw new BadRequest('user id is not valid');
 
-    await connectAccountHandler(code, appId, userId, connectionType, redirectUrl);
-    res.status(201).send();
-  } catch (err) {
-    handleError(err, req, res);
-  }
+  await connectAccountHandler(code, appId, userId, connectionType, redirectUrl);
+  res.status(201).send();
 });
 
 /**
  * Delete a connection from a user
  */
 app.delete('/:appId/user/:userId/connection/:connectionTypeId', async (req, res) => {
-  try {
-    const appId = req.params.appId.toLowerCase();
-    const connectionType = z.enum(ConnectionType).parse(req.params.connectionTypeId.toLowerCase());
-    const userId = Number.parseInt(req.params.userId);
+  const appId = req.params.appId.toLowerCase();
+  const connectionType = z.enum(ConnectionType).parse(req.params.connectionTypeId.toLowerCase());
+  const userId = Number.parseInt(req.params.userId);
 
-    if (isNaN(userId)) throw new BadRequest('user id is not valid');
+  if (isNaN(userId)) throw new BadRequest('user id is not valid');
 
-    await deleteUserConnectionHandler(userId, appId, connectionType);
+  await deleteUserConnectionHandler(userId, appId, connectionType);
 
-    res.status(200).send();
-  } catch (err) {
-    handleError(err, req, res);
-  }
+  res.status(200).send();
 });
 
 /**
  * Revoke access token from a connection
  */
 app.delete('/:appId/user/:userId/connection/:connectionTypeId/revoke', async (req, res) => {
-  try {
-    const appId = req.params.appId.toLowerCase();
-    const connectionType = z.enum(ConnectionType).parse(req.params.connectionTypeId.toLowerCase());
-    const userId = Number.parseInt(req.params.userId);
+  const appId = req.params.appId.toLowerCase();
+  const connectionType = z.enum(ConnectionType).parse(req.params.connectionTypeId.toLowerCase());
+  const userId = Number.parseInt(req.params.userId);
 
-    if (isNaN(userId)) throw new BadRequest('user id is not valid');
+  if (isNaN(userId)) throw new BadRequest('user id is not valid');
 
-    await revokeConnectionTokenHandler(userId, appId, connectionType);
+  await revokeConnectionTokenHandler(userId, appId, connectionType);
 
-    res.status(200).send();
-  } catch (err) {
-    handleError(err, req, res);
-  }
+  res.status(200).send();
 });
 
 
@@ -73,15 +61,11 @@ app.delete('/:appId/user/:userId/connection/:connectionTypeId/revoke', async (re
  * Get a connection from a user
  */
 app.get('/:appId/user/:userId/connections', async (req, res) => {
-  try {
-    const appId = req.params.appId.toLowerCase();
-    const userId = Number.parseInt(req.params.userId);
+  const appId = req.params.appId.toLowerCase();
+  const userId = Number.parseInt(req.params.userId);
 
-    if (isNaN(userId)) throw new BadRequest('invalid user id');
+  if (isNaN(userId)) throw new BadRequest('invalid user id');
 
-    const connections = await userConnectionsHandler(appId, userId);
-    res.json(connections);
-  } catch (err) {
-    handleError(err, req, res);
-  }
+  const connections = await userConnectionsHandler(appId, userId);
+  res.json(connections);
 });

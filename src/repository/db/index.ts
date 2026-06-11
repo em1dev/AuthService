@@ -16,6 +16,10 @@ export class Database {
     }));
   }
 
+  public close = () => {
+    this.client.close();
+  };
+
   public run = (sql: string, params?: unknown) => (
     new Promise<sqlite3.RunResult>((resolve, reject) => {
       this.client.run(sql, params, function (err) {
