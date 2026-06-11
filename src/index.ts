@@ -7,6 +7,11 @@ import { db } from './repository/db';
 export const app = express();
 app.use(express.json());
 
+app.get('/health', (_, res) => {
+  const status = db.hasLoaded ? 200 : 500;
+  res.status(status).send();
+});
+
 app.use('/', (req, _, next) => {
   console.log(`[${req.method}] - ${req.path}`);
   next();

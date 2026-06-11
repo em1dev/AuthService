@@ -5,6 +5,7 @@ import { Config } from '../../config';
 export class Database {
 
   private client: sqlite3.Database;
+  public hasLoaded: boolean = false;
 
   constructor(path: string, verbose: boolean = false) {
     if (verbose) { sqlite3.verbose(); }
@@ -12,7 +13,9 @@ export class Database {
     this.client = new sqlite3.Database(path, (err => {
       if (err) {
         console.log('Error loading db: ', err);
+        return;
       }
+      this.hasLoaded = true;
     }));
   }
 
