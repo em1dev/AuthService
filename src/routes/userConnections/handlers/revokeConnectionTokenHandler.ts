@@ -1,6 +1,7 @@
 import { TwitchApi } from '../../../api/twitchApi';
 import { decrypt, encrypt } from '../../../encryption';
 import { HandlerApiResult } from '../../../HandlerApiResult';
+import { logger } from '../../../logger';
 import { getAppService } from '../../../repository/appRepository';
 import { deleteUserConnection, getUserConnection, updateUserConnection } from '../../../repository/connectionRepository';
 import { ConnectionType, ExternalServiceType } from '../../../repository/types';
@@ -31,13 +32,13 @@ export const revokeConnectionTokenHandler = async (
 
   const resp = await TwitchApi.revokeToken(connection.token, service.clientId);
   if (resp.error)
-    console.log('error revoking token', resp.error);
+    logger.info(resp.error, 'Error revoking token');
 
   const refreshToken = decrypt(connection.refreshToken);
   const refreshResult = await TokenRefreshService.getRefreshToken(service, connectionTypeId, refreshToken);
 
   if (!refreshResult) {
-    console.error(`Failed refreshing token for user ${userId} with connection ${connection.type} for app ${appId}`);
+    logger.error(`Failed refreshing token for user ${userId} with connection ${connection.type} for app ${appId}`);
     await deleteUserConnection(userId, connectionTypeId);
     return HandlerApiResult.Error(400, 'Token revoked but unable to refresh new token');
   }

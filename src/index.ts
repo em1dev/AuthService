@@ -1,4 +1,5 @@
 import express, { ErrorRequestHandler } from 'express';
+import { httpLogger, logger } from './logger';
 import { Config } from './config';
 import { ZodError }  from 'zod';
 import { db } from './repository/db';
@@ -12,10 +13,7 @@ app.get('/health', (_, res) => {
   res.status(status).send();
 });
 
-app.use('/', (req, _, next) => {
-  console.log(`[${req.method}] - ${req.path}`);
-  next();
-});
+app.use(httpLogger);
 
 import './routes/apps/routes';
 import './routes/userConnections/routes';
@@ -23,15 +21,15 @@ import './routes/userAuthentication/routes';
 
 // must be 4 params so that its registered as an error handler
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const errorHandler:ErrorRequestHandler = (err:unknown, _, res, next) => {
+const errorHandler:ErrorRequestHandler = (err:unknown, req, res, next) => {
   if (err instanceof ZodError) {
     const issues = z.treeifyError(err);
-    console.log(z.prettifyError(err));
+    req.log.info(z.prettifyError(err));
     res.status(400).send(issues);
     return;
   }
 
-  console.log(err);
+  req.log.error(err);
   res.status(500).send('Internal error');
 };
 
@@ -42,18 +40,18 @@ app.use((_, res) => {
 });
 
 const server = app.listen(Config.PORT, () => {
-  console.log(`Server started at http://localhost:${Config.PORT}`);
+  logger.info(`Server started at http://localhost:${Config.PORT}`);
 });
 
 process.on('SIGTERM', () => {
-  console.log('Server is shutting down..');
+  logger.info('Server is shutting down..');
   server.close((err) => {
     db.close();
     if (err) {
-      console.error('Failed to gracefully close server', err);
+      logger.error(err, 'Failed to gracefully close server');
       return;
     }
-    console.log('Server has closed');
+    logger.info('Server has closed');
   });
 });
 

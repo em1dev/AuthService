@@ -1,4 +1,5 @@
 import { Database } from '..';
+import { logger } from '../../../logger';
 import { createTables } from './01_init';
 import { createKeyStoreTable } from './02_key_store_table';
 import { Migration } from './types';
@@ -18,12 +19,12 @@ export class MigrationRunner {
   public run = async () => {
     await this.addMigrationTable();
     const toRun = await this.getMigrationsToRun();
-    console.log(`${toRun.length} migrations to run`);
+    logger.info(`${toRun.length} migrations to run`);
     for (const migration of toRun) {
-      console.log(`Running migration: ${migration.id}`);
+      logger.info(`Running migration: ${migration.id}`);
       await migration.command(this._db);
       await this.addMigrationToMigrationTable(migration.id);
-      console.log(`Finished running migration: ${migration.id}`);
+      logger.info(`Finished running migration: ${migration.id}`);
     }
   };
 

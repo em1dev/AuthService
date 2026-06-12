@@ -9,6 +9,7 @@ import { createToken } from '../../../jwtService';
 import { addUserConnection, getUserConnection, updateUserConnection } from '../../../repository/connectionRepository';
 import { TokenRefreshService } from '../../../tokenRefreshService';
 import { HandlerApiResult } from '../../../HandlerApiResult';
+import { logger } from '../../../logger';
 
 type ProviderAuthResult = {
   refreshToken: string,
@@ -71,7 +72,7 @@ export const authenticationHandler = async (
   let userFromDb = await getUserByProvider(appId, result.userId, providerId);
 
   if (!userFromDb) {
-    console.log('new user authenticated. creating user');
+    logger.info('new user authenticated. creating user');
     await createUser(appId, [{
       type: providerId,
       userId: result.userId,
@@ -87,7 +88,7 @@ export const authenticationHandler = async (
   const connectionType = getConnectionProviderFromLoginProvier(providerId);
   if (shouldUpsertConnection && connectionType != null)
   {
-    console.log(`upserting user connection ${userFromDb.id}`);
+    logger.info(`upserting user connection ${userFromDb.id}`);
     const encryptedToken = encrypt(result.accessToken);
     const encryptedRefreshToken = encrypt(result.refreshToken);
 
@@ -121,21 +122,21 @@ export const authenticationHandler = async (
 const handleTwitchAuth = async (code: string, service: ExternalServiceDto, redirectUrl: string): Promise<ProviderAuthResult | null> => {
   const authenticationResult = await TwitchApi.authenticateCode(code, service.clientId, service.clientSecret, redirectUrl);
   if (authenticationResult.error) {
-    console.log(authenticationResult.error);
+    logger.info(authenticationResult.error);
     return null;
   }
 
   const { access_token, refresh_token, expires_in } = authenticationResult.success;
   const tokenVerifyResponse = await TwitchApi.verifyToken(access_token);
   if (tokenVerifyResponse.error) {
-    console.log(tokenVerifyResponse.error);
+    logger.info(tokenVerifyResponse.error);
     return null;
   }
   const { login, user_id } = tokenVerifyResponse.success;
 
   const { success: user } = await TwitchApi.getUserInfo(user_id, access_token, service.clientId);
   if (!user) {
-    console.log('Unable to find user');
+    logger.error('Unable to get user information after authentication');
     return null;
   }
 
@@ -153,7 +154,7 @@ const handleTwitchAuth = async (code: string, service: ExternalServiceDto, redir
 const handleTikTokAuth = async (code: string, service: ExternalServiceDto, redirectUrl: string): Promise<ProviderAuthResult | null> => {
   const authenticationResult = await TikTokApi.authenticateWithCode(code, service.clientId, service.clientSecret, redirectUrl);
   if (authenticationResult.error !== undefined) {
-    console.log('error authenticating with tiktok', authenticationResult);
+    logger.info(authenticationResult, 'error authenticating with tiktok');
     return null;
   }
 
@@ -161,7 +162,7 @@ const handleTikTokAuth = async (code: string, service: ExternalServiceDto, redir
 
   const userInfoResp = await TikTokApi.getUserInfo(access_token);
   if (userInfoResp.error !== undefined) {
-    console.log('unable to get user information after authentication', userInfoResp);
+    logger.error(userInfoResp, 'Unable to get user information after authentication');
     return null;
   }
 

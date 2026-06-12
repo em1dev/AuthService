@@ -1,5 +1,6 @@
 import { TikTokApi } from '../api/tiktokApi';
 import { TwitchApi } from '../api/twitchApi';
+import { logger } from '../logger';
 import { ExternalServiceDto } from '../repository/appRepository';
 import { ConnectionType } from '../repository/types';
 
@@ -24,8 +25,8 @@ const getRefreshToken = async (
   if (type === ConnectionType.tiktok) {
     const data = await TikTokApi.refreshToken(refreshToken, service.clientId, service.clientSecret);
     if (data.error) {
-      console.error(data);
-      console.error(`Error refreshing token for service ${type}`);
+      logger.error(data);
+      logger.error(`Error refreshing token for service ${type}`);
       return null;
     }
     return {
@@ -39,8 +40,7 @@ const getRefreshToken = async (
   if (type === ConnectionType.twitch) {
     const data = await TwitchApi.refreshToken(refreshToken, service.clientId, service.clientSecret);
     if (data.error){
-      console.error(data);
-      console.error(`Error refreshing token for service ${type}`);
+      logger.error(data, `Error refreshing token for service ${type}`);
       return null;
     }
     return {

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import sqlite3 from '@vscode/sqlite3';
 import { Config } from '../../config';
+import { logger } from '../../logger';
 
 export class Database {
 
@@ -12,7 +13,7 @@ export class Database {
 
     this.client = new sqlite3.Database(path, (err => {
       if (err) {
-        console.log('Error loading db: ', err);
+        logger.error(err, 'Error loading db');
         return;
       }
       this.hasLoaded = true;

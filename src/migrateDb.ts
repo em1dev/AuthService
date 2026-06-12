@@ -1,9 +1,10 @@
+import { logger } from './logger';
 import { db } from './repository/db';
 import { MigrationRunner } from './repository/db/migrations';
 
 (async () => {
   const migrationRunner = new MigrationRunner(db);
-  console.log('Migration started...');
+  logger.info('Migration started...');
   await migrationRunner.run();
-  console.log('Completed');
+  logger.info('Completed');
 })();

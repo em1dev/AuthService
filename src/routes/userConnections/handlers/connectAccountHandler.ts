@@ -2,6 +2,7 @@ import { TikTokApi } from '../../../api/tiktokApi';
 import { TwitchApi } from '../../../api/twitchApi';
 import { decrypt, encrypt } from '../../../encryption';
 import { HandlerApiResult } from '../../../HandlerApiResult';
+import { logger } from '../../../logger';
 import { ExternalServiceDto, getAppService } from '../../../repository/appRepository';
 import { addUserConnection, getUserConnection } from '../../../repository/connectionRepository';
 import { ConnectionType, ExternalServiceType } from '../../../repository/types';
@@ -75,7 +76,7 @@ const getTokenFromServiceHandler = async (code: string, service: ExternalService
 const getTikTokTokens = async (code: string, service: ExternalServiceDto, redirectUrl: string):Promise<TokenResponse | undefined> => {
   const resp = await TikTokApi.authenticateWithCode(code, service.clientId, service.clientSecret, redirectUrl);
   if (resp.error !== undefined) {
-    console.error(resp);
+    logger.error(resp);
     return;
   }
   return {
@@ -89,13 +90,13 @@ const getTikTokTokens = async (code: string, service: ExternalServiceDto, redire
 const getTwitchTokens = async (code: string, service: ExternalServiceDto, redirectUrl: string):Promise<TokenResponse | undefined> => {
   const resp = await TwitchApi.authenticateCode(code, service.clientId, service.clientSecret, redirectUrl);
   if (resp.error) {
-    console.error(resp);
+    logger.error(resp);
     return;
   }
 
   const verifyResp = await TwitchApi.verifyToken(resp.success.access_token);
   if (verifyResp.error){
-    console.error(verifyResp);
+    logger.error(verifyResp);
     return;
   }
 

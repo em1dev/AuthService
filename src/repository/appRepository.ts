@@ -1,3 +1,4 @@
+import { logger } from '../logger';
 import { db } from './db';
 import { ExternalServiceType, Tables } from './types';
 
@@ -98,7 +99,7 @@ const createOrUpdateApp = async (nameId: string, externalService: Array<{
 
   } catch(exception) {
     db.run('ROLLBACK TRANSACTION');
-    console.error('Failed to create or update app:', exception);
+    logger.error(exception, 'Failed to create or update app');
     return CreateOrUpdateStatus.Failed;
   }
 };

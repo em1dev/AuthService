@@ -1,3 +1,4 @@
+import { logger } from '../../logger';
 import { apiClient } from '../apiClient';
 import { TokenCodeResponse, TokenRefreshResponse, TokenVerifyResponse, UserDetails } from './types';
 
@@ -20,7 +21,7 @@ const getUserInfo = async (id: string, token: string, clientId: string): Promise
 
   if (!resp.ok) {
     const error = await resp.json() as TwitchError;
-    console.error(`Api error ${resp.status}`, error);
+    logger.error(error, `Api error ${resp.status}`);
     return { error };
   }
 

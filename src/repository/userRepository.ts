@@ -1,3 +1,4 @@
+import { logger } from '../logger';
 import { db } from './db';
 import { LoginProviderType, Tables } from './types';
 
@@ -71,7 +72,7 @@ const createUser = async (
   // check that providers are different
   const uniqueProviders = new Set(providers.map(i => i.type));
   if (uniqueProviders.size !== providers.length){
-    console.log('providers are not unique');
+    logger.info('Providers are not unique');
     return;
   }
 

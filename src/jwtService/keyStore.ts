@@ -1,6 +1,7 @@
 import jose from 'jose';
 import { keyStoreRepository } from '../repository/keyStoreRepository';
 import { decrypt, encrypt } from '../encryption';
+import { logger } from '../logger';
 
 const ALG = 'PS256';
 
@@ -18,7 +19,7 @@ class KeyStore {
 
     const dbKeys = await keyStoreRepository.getKeys();
     if (dbKeys) {
-      console.log('Loaded encryption keys from db');
+      logger.info('Loaded encryption keys from db');
       const exportedPublicKey = decrypt(dbKeys.publicKey);
       const exportedPrivateKey = decrypt(dbKeys.privateKey);
 
@@ -36,7 +37,7 @@ class KeyStore {
 
   public refreshKeys = async () => {
     const { privateKey, publicKey } = await jose.generateKeyPair(ALG, { extractable: true });
-    console.log('Refreshed encryption keys');
+    logger.info('Refreshed encryption keys');
 
     const exportedPublicKey = await jose.exportSPKI(publicKey);
     const exportedPrivateKey = await jose.exportPKCS8(privateKey);
