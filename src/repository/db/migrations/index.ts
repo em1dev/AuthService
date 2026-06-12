@@ -1,10 +1,12 @@
 import { Database } from '..';
 import { createTables } from './01_init';
+import { createKeyStoreTable } from './02_key_store_table';
 import { Migration } from './types';
 
 export class MigrationRunner {
   private _migrations: Array<Migration> = [
-    createTables
+    createTables,
+    createKeyStoreTable
   ];
 
   private _db: Database;
