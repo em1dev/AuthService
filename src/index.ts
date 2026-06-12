@@ -1,8 +1,8 @@
 import express, { ErrorRequestHandler } from 'express';
 import { Config } from './config';
-import { HttpErrorBase } from './errors';
 import { ZodError }  from 'zod';
 import { db } from './repository/db';
+import z from 'zod';
 
 export const app = express();
 app.use(express.json());
@@ -23,18 +23,15 @@ import './routes/userAuthentication/routes';
 
 // must be 4 params so that its registered as an error handler
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const errorHandler:ErrorRequestHandler = (err:unknown, req, res, next) => {
-  console.log(err);
+const errorHandler:ErrorRequestHandler = (err:unknown, _, res, next) => {
   if (err instanceof ZodError) {
-    res.status(400).send(err.message);
+    const issues = z.treeifyError(err);
+    console.log(z.prettifyError(err));
+    res.status(400).send(issues);
     return;
   }
 
-  if (err instanceof HttpErrorBase) {
-    res.status(err.statusCode).send(err.message);
-    return;
-  }
-
+  console.log(err);
   res.status(500).send('Internal error');
 };
 

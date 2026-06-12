@@ -8,9 +8,9 @@ import { getApps } from './handlers/getAppsHandler';
 /**
  * Get apps
  */
-app.get('/app', async (req, res) => {
-  const apps = await getApps();
-  return res.status(200).send(apps);
+app.get('/app', async (_, res) => {
+  const result = await getApps();
+  return result.sendResult(res);
 });
 
 /**
@@ -21,9 +21,9 @@ app.get('/app/:nameId', async (req, res) => {
     .string({ error: 'invalid app id'})
     .min(3)
     .max(200).parse(req.params.nameId);
-  const services = await getAppServicesHandler(name);
-  if (services.length === 0) return res.status(404).send();
-  return res.status(200).send(services);
+
+  const result = await getAppServicesHandler(name);
+  return result.sendResult(res);
 });
 
 /**
@@ -38,6 +38,6 @@ app.post('/app/:nameId', async (req, res) => {
   }));
   const externalService = requestSchema.parse(req.body);
 
-  const created = await createOrUpdateAppHandler(name, externalService);
-  return res.status(201).send(created);
+  const result = await createOrUpdateAppHandler(name, externalService);
+  return result.sendResult(res);
 });

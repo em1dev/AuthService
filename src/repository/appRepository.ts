@@ -45,19 +45,29 @@ const getAppIds = async () => (
     `)
 );
 
+export enum CreateOrUpdateStatus
+{
+  Created,
+  Updated,
+  Failed
+}
+
 const createOrUpdateApp = async (nameId: string, externalService: Array<{
     type: ExternalServiceType,
     clientSecret: string,
     clientId: string,
-  }>) => {
+  }>): Promise<CreateOrUpdateStatus> => {
   try {
     db.run('BEGIN TRANSACTION');
+    let resultStatus = CreateOrUpdateStatus.Updated;
+
     const existingApp = await getApp(nameId);
     if (!existingApp){
       await db.run(`
           INSERT INTO ${Tables.app} (id)
           VALUES ($appId);
         `, { $appId: nameId});
+      resultStatus = CreateOrUpdateStatus.Created;
     }
 
     for (const service of externalService) {
@@ -79,13 +89,17 @@ const createOrUpdateApp = async (nameId: string, externalService: Array<{
           `, {
           $type: service.type, $clientSecret: service.clientSecret, $clientId: service.clientId, $appId: nameId
         });
+        resultStatus = CreateOrUpdateStatus.Created;
       }
     }
 
     db.run('COMMIT TRANSACTION');
+    return resultStatus;
+
   } catch(exception) {
     db.run('ROLLBACK TRANSACTION');
-    throw exception;
+    console.error('Failed to create or update app:', exception);
+    return CreateOrUpdateStatus.Failed;
   }
 };
 

@@ -1,14 +1,22 @@
 import { decrypt, encrypt } from '../../../encryption';
-import { createOrUpdateApp, getAppServices } from '../../../repository/appRepository';
+import { HandlerApiResult } from '../../../HandlerApiResult';
+import { createOrUpdateApp, CreateOrUpdateStatus, getAppServices } from '../../../repository/appRepository';
 import { ExternalServiceType } from '../../../repository/types';
 
+type CreateOrUpdateHandlerResult = Array<{
+  id: number,
+  clientId: string,
+  clientSecret: string,
+  type: ExternalServiceType
+}>
+
 export const createOrUpdateAppHandler = async (
-  appName: string, 
-  externalServices: Array<{ 
+  appName: string,
+  externalServices: Array<{
     type: ExternalServiceType,
     clientSecret: string,
-    clientId: string 
-  }>) => {
+    clientId: string
+  }>): Promise<HandlerApiResult<CreateOrUpdateHandlerResult>> => {
 
   const newExternalServicesEncrypted = externalServices.map(service => ({
     ...service,
@@ -16,7 +24,12 @@ export const createOrUpdateAppHandler = async (
     clientId: encrypt(service.clientId)
   }));
 
-  await createOrUpdateApp(appName, newExternalServicesEncrypted);
+  const createStatus = await createOrUpdateApp(appName, newExternalServicesEncrypted);
+  if (createStatus == CreateOrUpdateStatus.Failed) {
+    return HandlerApiResult.Error(500, 'Unable to create service');
+  }
+
+  const statusCode = createStatus == CreateOrUpdateStatus.Created ? 201 : 200;
 
   const servicesEncrypted = await getAppServices(appName);
   const servicesDecrypted = servicesEncrypted.map(service => ({
@@ -25,5 +38,5 @@ export const createOrUpdateAppHandler = async (
     clientId: decrypt(service.clientId)
   }));
 
-  return servicesDecrypted;
+  return HandlerApiResult.Success(statusCode, servicesDecrypted);
 };

@@ -1,5 +1,9 @@
+import { HandlerApiResult } from '../../../HandlerApiResult';
 import { getAppIds } from '../../../repository/appRepository';
 
-export const getApps = async () => {
-  return await getAppIds();
+type GetAppsResult = Array<{ id: string }>;
+
+export const getApps = async (): Promise<HandlerApiResult<GetAppsResult>> => {
+  const appIds = await getAppIds();
+  return HandlerApiResult.Success<GetAppsResult>(200, appIds);
 };

@@ -1,7 +1,7 @@
 import { TikTokApi } from '../../../api/tiktokApi';
 import { TwitchApi } from '../../../api/twitchApi';
 import { decrypt, encrypt } from '../../../encryption';
-import { BadRequest, HttpErrorBase, NotFoundError, UnauthorizedError } from '../../../errors';
+import { HandlerApiResult } from '../../../HandlerApiResult';
 import { ExternalServiceDto, getAppService } from '../../../repository/appRepository';
 import { addUserConnection, getUserConnection } from '../../../repository/connectionRepository';
 import { ConnectionType, ExternalServiceType } from '../../../repository/types';
@@ -31,28 +31,23 @@ export const connectAccountHandler = async (
   userId: number,
   connectionType: ConnectionType,
   redirectUrl: string
-) => {
+): Promise<HandlerApiResult<null>> => {
 
   const user = await getUser(userId, appId);
-  if (!user) throw new NotFoundError(`user ${userId} could not found`);
+  if (!user)
+    return HandlerApiResult.Error(404, `User ${userId} could not be found`);
 
   const existingConnection = await getUserConnection(userId, connectionType);
-  if (existingConnection) throw new HttpErrorBase(409, `user ${userId} has an existing connection for ${connectionType}`);
+  if (existingConnection)
+    return HandlerApiResult.Error(409, `User ${userId} has an existing connection for ${connectionType}`);
 
   const service = await getAppServiceDecrypted(appId, connectionType);
-  if (!service) throw new BadRequest(`Service ${connectionType} not supported`);
+  if (!service)
+    return HandlerApiResult.Error(400, `Service ${connectionType} not supported`);
 
-  let tokenResponse: TokenResponse | null;
-  switch (connectionType){
-  case 'tiktok':
-    tokenResponse = await getTikTokTokens(code, service, redirectUrl);
-    break;
-  case 'twitch':
-    tokenResponse = await getTwitchTokens(code, service, redirectUrl);
-    break;
-  default:
-    throw new BadRequest(`invalid connection type ${connectionType}`);
-  }
+  const tokenResponse = await getTokenFromServiceHandler(code, service, redirectUrl);
+  if (!tokenResponse)
+    return HandlerApiResult.Error(500, 'Unable to get token');
 
   const encryptedToken = encrypt(tokenResponse.token);
   const encryptedRefreshToken = encrypt(tokenResponse.refreshToken);
@@ -60,13 +55,28 @@ export const connectAccountHandler = async (
   const expiresAt = TokenRefreshService.calculateExpiryDate(tokenResponse.expiresIn);
 
   await addUserConnection(userId, encryptedToken, encryptedRefreshToken, tokenResponse.userId, expiresAt, connectionType);
+
+  return HandlerApiResult.Success(201, null);
 };
 
-const getTikTokTokens = async (code: string, service: ExternalServiceDto, redirectUrl: string):Promise<TokenResponse> => {
+const getTokenFromServiceHandler = async (code: string, service: ExternalServiceDto, redirectUrl: string):Promise<TokenResponse | undefined> => {
+  let tokenResponse: TokenResponse | undefined;
+  switch (service.type){
+  case 'tiktok':
+    tokenResponse = await getTikTokTokens(code, service, redirectUrl);
+    break;
+  case 'twitch':
+    tokenResponse = await getTwitchTokens(code, service, redirectUrl);
+    break;
+  }
+  return tokenResponse;
+};
+
+const getTikTokTokens = async (code: string, service: ExternalServiceDto, redirectUrl: string):Promise<TokenResponse | undefined> => {
   const resp = await TikTokApi.authenticateWithCode(code, service.clientId, service.clientSecret, redirectUrl);
   if (resp.error !== undefined) {
     console.error(resp);
-    throw new UnauthorizedError('Unable to connect with tiktok api');
+    return;
   }
   return {
     refreshToken: resp.success.refresh_token,
@@ -76,17 +86,17 @@ const getTikTokTokens = async (code: string, service: ExternalServiceDto, redire
   };
 };
 
-const getTwitchTokens = async (code: string, service: ExternalServiceDto, redirectUrl: string):Promise<TokenResponse> => {
+const getTwitchTokens = async (code: string, service: ExternalServiceDto, redirectUrl: string):Promise<TokenResponse | undefined> => {
   const resp = await TwitchApi.authenticateCode(code, service.clientId, service.clientSecret, redirectUrl);
   if (resp.error) {
     console.error(resp);
-    throw new UnauthorizedError('Unable to connect with Twitch api');
+    return;
   }
 
   const verifyResp = await TwitchApi.verifyToken(resp.success.access_token);
   if (verifyResp.error){
     console.error(verifyResp);
-    throw new UnauthorizedError('Unable to connect with Twitch api');
+    return;
   }
 
   return {

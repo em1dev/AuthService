@@ -1,6 +1,5 @@
 import { ConnectionType, ExternalServiceType, LoginProviderType } from '../../../repository/types';
 import { TwitchApi } from '../../../api/twitchApi';
-import { BadRequest, InternalError, UnauthorizedError } from '../../../errors';
 import { createUser, getUserByProvider } from '../../../repository/userRepository';
 import { ExternalServiceDto, getAppService } from '../../../repository/appRepository';
 import { decrypt, encrypt } from '../../../encryption';
@@ -9,6 +8,7 @@ import { TokenUser } from '../../../types';
 import { createToken } from '../../../jwtService';
 import { addUserConnection, getUserConnection, updateUserConnection } from '../../../repository/connectionRepository';
 import { TokenRefreshService } from '../../../tokenRefreshService';
+import { HandlerApiResult } from '../../../HandlerApiResult';
 
 type ProviderAuthResult = {
   refreshToken: string,
@@ -48,11 +48,12 @@ export const authenticationHandler = async (
   providerId: LoginProviderType,
   redirectUrl: string,
   shouldUpsertConnection: boolean = false
-) => {
+):Promise<HandlerApiResult<{token: string}>> => {
   let result: ProviderAuthResult | null = null;
 
   const service = await getAppServiceDecrypted(appId, providerId);
-  if (!service) throw new BadRequest(`Login provider ${providerId} not supported on this app`);
+  if (!service)
+    return HandlerApiResult.Error(400, `Login provider ${providerId} not supported on this app`);
 
   switch(providerId) {
   case LoginProviderType.twitch:
@@ -62,6 +63,9 @@ export const authenticationHandler = async (
     result = await handleTikTokAuth(code, service, redirectUrl);
     break;
   }
+
+  if (result == null)
+    return HandlerApiResult.Error(403, 'Unable to aunthenticate with provider');
 
   // if it does not exist create it
   let userFromDb = await getUserByProvider(appId, result.userId, providerId);
@@ -75,7 +79,8 @@ export const authenticationHandler = async (
     }]);
 
     const insertedUserInDb = await getUserByProvider(appId, result.userId, providerId);
-    if (!insertedUserInDb) throw new InternalError('created entity not found. something went seriously wrong D:');
+    if (!insertedUserInDb)
+      throw new Error('created entity not found. something went seriously wrong D:');
     userFromDb = insertedUserInDb;
   }
 
@@ -109,28 +114,29 @@ export const authenticationHandler = async (
     }
   };
 
-  return await createToken(userResult, service.type);
+  const token = await createToken(userResult, service.type);
+  return HandlerApiResult.Success(200, { token });
 };
 
-const handleTwitchAuth = async (code: string, service: ExternalServiceDto, redirectUrl: string): Promise<ProviderAuthResult> => {
+const handleTwitchAuth = async (code: string, service: ExternalServiceDto, redirectUrl: string): Promise<ProviderAuthResult | null> => {
   const authenticationResult = await TwitchApi.authenticateCode(code, service.clientId, service.clientSecret, redirectUrl);
   if (authenticationResult.error) {
-    console.error(authenticationResult.error);
-    throw new UnauthorizedError('Invalid twitch authentication');
+    console.log(authenticationResult.error);
+    return null;
   }
 
   const { access_token, refresh_token, expires_in } = authenticationResult.success;
   const tokenVerifyResponse = await TwitchApi.verifyToken(access_token);
   if (tokenVerifyResponse.error) {
-    console.error(tokenVerifyResponse.error);
-    throw new UnauthorizedError('Twitch token verification failed');
+    console.log(tokenVerifyResponse.error);
+    return null;
   }
   const { login, user_id } = tokenVerifyResponse.success;
 
   const { success: user } = await TwitchApi.getUserInfo(user_id, access_token, service.clientId);
   if (!user) {
-    console.error('Unable to find user');
-    throw new InternalError('Unable to fetch user');
+    console.log('Unable to find user');
+    return null;
   }
 
   return {
@@ -144,19 +150,19 @@ const handleTwitchAuth = async (code: string, service: ExternalServiceDto, redir
   };
 };
 
-const handleTikTokAuth = async (code: string, service: ExternalServiceDto, redirectUrl: string): Promise<ProviderAuthResult> => {
+const handleTikTokAuth = async (code: string, service: ExternalServiceDto, redirectUrl: string): Promise<ProviderAuthResult | null> => {
   const authenticationResult = await TikTokApi.authenticateWithCode(code, service.clientId, service.clientSecret, redirectUrl);
   if (authenticationResult.error !== undefined) {
-    console.error('error authenticating with tiktok', authenticationResult);
-    throw new UnauthorizedError('Tiktok token verification failed');
+    console.log('error authenticating with tiktok', authenticationResult);
+    return null;
   }
 
   const { access_token, refresh_token, open_id, expires_in } = authenticationResult.success;
 
   const userInfoResp = await TikTokApi.getUserInfo(access_token);
   if (userInfoResp.error !== undefined) {
-    console.error('unable to get user information after authentication', userInfoResp);
-    throw new UnauthorizedError('Tiktok token verification failed');
+    console.log('unable to get user information after authentication', userInfoResp);
+    return null;
   }
 
   const { username, display_name, avatar_url } = userInfoResp.success;

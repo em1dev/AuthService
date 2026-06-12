@@ -1,4 +1,3 @@
-import { BadRequest } from '../errors';
 import { db } from './db';
 import { LoginProviderType, Tables } from './types';
 
@@ -8,7 +7,7 @@ const getUser = async (userId: number, appId: string) => {
       appId: number
     }
 
-    const user = await db.get<{ 
+    const user = await db.get<{
       id: number,
       fkAppId: number
     }>(`
@@ -72,7 +71,8 @@ const createUser = async (
   // check that providers are different
   const uniqueProviders = new Set(providers.map(i => i.type));
   if (uniqueProviders.size !== providers.length){
-    throw new BadRequest('providers are not unique');
+    console.log('providers are not unique');
+    return;
   }
 
   try {

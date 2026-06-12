@@ -16,9 +16,9 @@ app.post('/:appId/authenticate/:providerId', async (req, res) => {
 
   const appId = req.params.appId.toLowerCase();
   const providerId = z.enum(LoginProviderType).parse(req.params.providerId.toLowerCase());
-  const token = await authenticationHandler(code, appId, providerId, redirectUrl, shouldUpsertConnection);
+  const result = await authenticationHandler(code, appId, providerId, redirectUrl, shouldUpsertConnection);
 
-  res.json({ token });
+  result.sendResult(res);
 });
 
 app.post('/token/verify', async (req, res) => {
