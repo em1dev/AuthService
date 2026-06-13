@@ -122,6 +122,9 @@ const getYoutubeTokens = async (code: string, service: ExternalServiceDto, redir
   const channel = await googleApi.getYoutubeChannel(tokens.access_token);
   if (!channel) {
     logger.info('Authenticated user does not have a youtube channel');
+    // revoke to avoid locking the connection on next connection
+    // as refresh token can only be fetched once
+    await googleApi.revokeToken(tokens.access_token);
     return;
   }
 
