@@ -100,7 +100,7 @@ const updateUserConnection = async (
 ) => {
   await db.run(`
     UPDATE ${Tables.connection}
-    SET 
+    SET
       token = $token,
       refresh_token = $refreshToken,
       expires_at = $expiresAt

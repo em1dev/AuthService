@@ -1,3 +1,4 @@
+import { googleApi } from '../../../api/googleApi';
 import { TikTokApi } from '../../../api/tiktokApi';
 import { TwitchApi } from '../../../api/twitchApi';
 import { decrypt, encrypt } from '../../../encryption';
@@ -61,16 +62,14 @@ export const connectAccountHandler = async (
 };
 
 const getTokenFromServiceHandler = async (code: string, service: ExternalServiceDto, redirectUrl: string):Promise<TokenResponse | undefined> => {
-  let tokenResponse: TokenResponse | undefined;
   switch (service.type){
-  case 'tiktok':
-    tokenResponse = await getTikTokTokens(code, service, redirectUrl);
-    break;
-  case 'twitch':
-    tokenResponse = await getTwitchTokens(code, service, redirectUrl);
-    break;
+  case ExternalServiceType.tiktok:
+    return await getTikTokTokens(code, service, redirectUrl);
+  case ExternalServiceType.twitch:
+    return await getTwitchTokens(code, service, redirectUrl);
+  case ExternalServiceType.youtube:
+    return await getYoutubeTokens(code, service, redirectUrl);
   }
-  return tokenResponse;
 };
 
 const getTikTokTokens = async (code: string, service: ExternalServiceDto, redirectUrl: string):Promise<TokenResponse | undefined> => {
@@ -105,5 +104,31 @@ const getTwitchTokens = async (code: string, service: ExternalServiceDto, redire
     refreshToken: resp.success.refresh_token,
     token: resp.success.access_token,
     userId: verifyResp.success.user_id,
+  };
+};
+
+const getYoutubeTokens = async (code: string, service: ExternalServiceDto, redirectUrl: string):Promise<TokenResponse | undefined> => {
+  const tokens = await googleApi.authenticateCode(code, service.clientId, service.clientSecret, redirectUrl);
+  if (!tokens) return;
+
+  if (!tokens.refresh_token)
+  {
+    // api only return refresh token the first time we authenticate
+    // to get another one we need to revoke connection and reconnect
+    await googleApi.revokeToken(tokens.access_token);
+    return;
+  }
+
+  const channel = await googleApi.getYoutubeChannel(tokens.access_token);
+  if (!channel) {
+    logger.info('Authenticated user does not have a youtube channel');
+    return;
+  }
+
+  return {
+    expiresIn: tokens.expires_in,
+    refreshToken: tokens.refresh_token,
+    token: tokens.access_token,
+    userId: channel.id,
   };
 };

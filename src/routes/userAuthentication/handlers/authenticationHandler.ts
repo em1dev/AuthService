@@ -1,4 +1,3 @@
-import { ConnectionType, ExternalServiceType, LoginProviderType } from '../../../repository/types';
 import { TwitchApi } from '../../../api/twitchApi';
 import { createUser, getUserByProvider } from '../../../repository/userRepository';
 import { ExternalServiceDto, getAppService } from '../../../repository/appRepository';
@@ -10,6 +9,7 @@ import { addUserConnection, getUserConnection, updateUserConnection } from '../.
 import { TokenRefreshService } from '../../../tokenRefreshService';
 import { HandlerApiResult } from '../../../HandlerApiResult';
 import { logger } from '../../../logger';
+import { ConnectionType, ExternalServiceType, LoginProviderType } from '../../../repository/types';
 
 type ProviderAuthResult = {
   refreshToken: string,

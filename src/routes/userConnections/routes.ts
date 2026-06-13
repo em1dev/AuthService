@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import { app } from '../..';
 import { connectAccountHandler } from './handlers/connectAccountHandler';
-import { ConnectionType } from '../../repository/types';
 import { deleteUserConnectionHandler } from './handlers/deleteUserConnectionHandler';
 import { userConnectionsHandler } from './handlers/userConnectionsHandler';
 import { revokeConnectionTokenHandler } from './handlers/revokeConnectionTokenHandler';
+import { ConnectionType } from '../../repository/types';
 
 /**
  * Add a connection to a user

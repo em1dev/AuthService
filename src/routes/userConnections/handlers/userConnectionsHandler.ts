@@ -1,3 +1,4 @@
+import { googleApi } from '../../../api/googleApi';
 import { TikTokApi } from '../../../api/tiktokApi';
 import { TwitchApi } from '../../../api/twitchApi';
 import { decrypt } from '../../../encryption';
@@ -67,6 +68,21 @@ export const userConnectionsHandler = async (appId: string, userId: number)
       connectionsWithUserData.push({
         displayName: userData.success.display_name,
         profileImageUrl: userData.success.avatar_url,
+        refreshToken: connection.refresh_token,
+        token: connection.token,
+        type: connection.type,
+        userId: connection.user_id
+      });
+    }
+
+    if (connection.type == ConnectionType.youtube) {
+      const channel = await googleApi.getYoutubeChannel(connection.token);
+      if (!channel)
+        return HandlerApiResult.Error(500, 'No youtube channel found');
+
+      connectionsWithUserData.push({
+        displayName: channel.snippet.title,
+        profileImageUrl: channel.snippet.thumbnails.default.url,
         refreshToken: connection.refresh_token,
         token: connection.token,
         type: connection.type,

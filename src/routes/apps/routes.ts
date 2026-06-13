@@ -1,9 +1,9 @@
 import { z } from 'zod';
 import { app } from '../..';
-import { ExternalServiceType } from '../../repository/types';
 import { createOrUpdateAppHandler } from './handlers/createOrUpdateAppHandler';
 import { getAppServicesHandler } from './handlers/getAppServicesHandler';
 import { getApps } from './handlers/getAppsHandler';
+import { ExternalServiceType } from '../../repository/types';
 
 /**
  * Get apps

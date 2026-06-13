@@ -1,3 +1,4 @@
+import { googleApi } from '../api/googleApi';
 import { TikTokApi } from '../api/tiktokApi';
 import { TwitchApi } from '../api/twitchApi';
 import { logger } from '../logger';
@@ -48,6 +49,21 @@ const getRefreshToken = async (
       refreshToken: data.success.refresh_token,
       token: data.success.access_token,
       expiresAt: calculateExpiryDate(data.success.expires_in)
+    };
+  }
+
+  if (type == ConnectionType.youtube) {
+    const data = await googleApi.refreshToken(refreshToken, service.clientId, service.clientSecret);
+    if (!data) {
+      logger.error(data, `Error refreshing token for service ${type}`);
+      return null;
+    }
+
+    return {
+      expiresIn: data.expires_in,
+      refreshToken: refreshToken,
+      token: data.access_token,
+      expiresAt: calculateExpiryDate(data.expires_in)
     };
   }
 
