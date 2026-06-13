@@ -44,7 +44,7 @@ const authenticateCode = async (
   });
 
   if (!resp.ok) {
-    console.log(await resp.text());
+    logger.info(await resp.text());
     return;
   }
 
@@ -70,7 +70,7 @@ const refreshToken = async (
   });
 
   if (!resp.ok){
-    console.log(await resp.text());
+    logger.info(await resp.text());
     return;
   }
 
